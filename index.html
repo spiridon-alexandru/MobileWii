@@ -1,0 +1,63 @@
+<html>
+<head>
+<script type="text/JavaScript" src="/static/jsDraw2D.js"></script>
+</head>
+
+<body>
+<p id="debugP">Debug text</p>
+<div id="canvas" style="position:relative;width:1000px;height:600px; border:1px solid black"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="text/javascript">
+	var socket = io.connect();
+	socket.on('connect', function () {
+	socket.on('message', function (msg) {
+		document.getElementById("debugP").innerHTML = msg;
+	});
+	
+	socket.on('acceleromessage', function(msg) {
+		movePongLine(msg);
+	});
+	});
+</script>
+
+<script type="text/JavaScript">
+	//Create jsGraphics object
+	var gr = new jsGraphics(document.getElementById("canvas"));
+
+	//Create jsColor object
+	var col = new jsColor("black");
+
+	//Create jsPen object
+	var pen = new jsPen(col,10);
+	
+	var lowerPongLimit = 30;
+	var upperPongLimit = 600;
+	//Draw a Line between 2 points
+	var pt1 = new jsPoint(20,30);
+	var pt2 = new jsPoint(20,100);
+	gr.drawLine(pen,pt1,pt2);
+	
+	function movePongLine(acceleroData)
+	{
+		document.getElementById("debugP").innerHTML = acceleroData;
+		
+		if (acceleroData > 0 && pt2.y + 25 <= upperPongLimit)
+		{
+			pt1.y = pt1.y + 25;
+			pt2.y = pt2.y + 25;
+			gr.clear();
+			gr.drawLine(pen,pt1,pt2);
+		}
+		else if (acceleroData < 0 && pt1.y - 25 >= lowerPongLimit)
+		{
+			pt1.y = pt1.y - 25;
+			pt2.y = pt2.y - 25;
+			gr.clear();
+			gr.drawLine(pen,pt1,pt2);
+		}
+	}
+</script>
+
+</body>
+</html>
