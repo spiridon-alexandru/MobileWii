@@ -180,15 +180,15 @@
 		//document.getElementById("debugP").innerHTML = acceleroData;
 		
 		gr.clear();
-		if (acceleroData > 0 && player1P2.y + 25 <= upperPongLimit)
+		if (acceleroData > 0 && player1P2.y + barMovementDistance <= upperPongLimit)
 		{
-			player1P1.y = player1P1.y + 25;
-			player1P2.y = player1P2.y + 25;
+			player1P1.y = player1P1.y + barMovementDistance;
+			player1P2.y = player1P2.y + barMovementDistance;
 		}
-		else if (acceleroData < 0 && player1P1.y - 25 >= lowerPongLimit)
+		else if (acceleroData < 0 && player1P1.y - barMovementDistance >= lowerPongLimit)
 		{
-			player1P1.y = player1P1.y - 25;
-			player1P2.y = player1P2.y - 25;
+			player1P1.y = player1P1.y - barMovementDistance;
+			player1P2.y = player1P2.y - barMovementDistance;
 		}
 		gr.drawLine(pen,player1P1,player1P2);
 		
@@ -204,17 +204,17 @@
 	{
 		//document.getElementById("debugP").innerHTML = acceleroData;
 		
-		if (acceleroData > 0 && player2P2.y + 25 <= upperPongLimit)
+		if (acceleroData > 0 && player2P2.y + barMovementDistance <= upperPongLimit)
 		{
-			player2P1.y = player2P1.y + 25;
-			player2P2.y = player2P2.y + 25;
+			player2P1.y = player2P1.y + barMovementDistance;
+			player2P2.y = player2P2.y + barMovementDistance;
 			gr.clear();
 			gr.drawLine(pen,player2P1,player2P2);
 		}
-		else if (acceleroData < 0 && player2P1.y - 25 >= lowerPongLimit)
+		else if (acceleroData < 0 && player2P1.y - barMovementDistance >= lowerPongLimit)
 		{
-			player2P1.y = player2P1.y - 25;
-			player2P2.y = player2P2.y - 25;
+			player2P1.y = player2P1.y - barMovementDistance;
+			player2P2.y = player2P2.y - barMovementDistance;
 			gr.clear();
 			gr.drawLine(pen,player2P1,player2P2);
 		}
@@ -300,6 +300,9 @@
 	var player2P2 = new jsPoint(rightPongLimit,initialPongYPos + pongLineHeight);
 	gr.drawLine(pen,player2P1,player2P2);
 	
+	// the pong bar movement distance
+	var barMovementDistance = 15;
+	
 	// the ball
 	var ballCenter = new jsPoint(500,300);
 	var ballColor = new jsColor("red");
@@ -308,6 +311,7 @@
 	
 	// the distance (the speed of the ball)
 	var ballSpeed = 5;
+	// the ball speed increases at every 'speedIncreaseInterval' milliseconds
 	var speedIncreaseInterval = 4000;
 	
 	// the scores
