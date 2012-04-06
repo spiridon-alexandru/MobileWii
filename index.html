@@ -1,13 +1,264 @@
 <html>
 <head>
-<script type="text/JavaScript" src="/static/jsDraw2D.js"></script>
+<script type="text/JavaScript" src="static/jsDraw2D.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="static/narrativejs/deploy/njs_compile.js"></script>
+
+<script type="text/JavaScript">
+
+	function init()
+	{
+		ballSpeed = 5;
+		speedIncreaseTimeout = setTimeout("increaseSpeed()", 2000);
+		timeout=setTimeout("animateBall()",10);
+		
+		if (document.addEventListener)
+		{
+		   document.addEventListener("keydown",keydown,false);
+		   document.addEventListener("keyup",keyup,false);
+		}	
+	}
+	
+	function animateBall() 
+	{
+		// do the animation
+		movePlayer1PongLine(0);
+		movePlayer2PongLine(0);
+		
+		var someoneWon = false;
+		if (ballCenter.x + ballSpeed > player2P1.x)
+		{
+			if (intersectsPlayer2())
+			{
+				// clear and draw ball right next to the pong line - for smoothness
+				movePlayer1PongLine(0);
+				ballCenter.x = player2P1.x - ballWidth;
+				drawBall();
+				
+				// reset the timeout
+				clearTimeout(timeout);
+				timeout=setTimeout("animateBall()",10);
+				
+				direction = -1;
+			}
+			else
+			{
+				someoneWon = true;
+				addPointToPlayer(1);
+				clearTimeout(timeout);
+				// goes left
+				resetBallAnimation(1);
+			}
+		}
+		if (ballCenter.x - ballSpeed < player1P1.x + pongBarWidth)
+		{
+			if (intersectsPlayer1())
+			{
+				// clear and draw ball right next to the pong line - for smoothness
+				movePlayer1PongLine(0);
+				ballCenter.x = player1P1.x + pongBarWidth + ballWidth; // leftPongLimit + pongBarWidth + ballWidth;
+				drawBall();
+				
+				// reset the timeout
+				clearTimeout(timeout);
+				timeout=setTimeout("animateBall()",10);
+				
+				direction = 1;
+			}
+			else
+			{
+				someoneWon = true;
+				addPointToPlayer(2);
+				clearTimeout(timeout);
+				// goes right
+				resetBallAnimation(-1);
+			}
+		}
+		
+		if (!someoneWon)
+		{
+			if (direction == 1)
+				ballCenter.x += ballSpeed;
+			else
+				ballCenter.x -= ballSpeed;
+
+			//Draw ball
+			drawBall();
+			
+			clearTimeout(timeout);
+			timeout=setTimeout("animateBall()",10);
+		}
+	} 
+	
+	function addPointToPlayer(player)
+	{
+		if (player == 1)
+		{
+			player1Score += 1;
+			document.getElementById("p1score").innerHTML = "Player 1: " + player1Score.toString();
+		}
+		else
+		{
+			if (player == 2)
+			{
+				player2Score += 1;
+				document.getElementById("p2score").innerHTML = "Player 2: " + player2Score.toString();
+			}
+		}
+	}
+	
+	function intersectsPlayer1()
+	{
+		if (ballCenter.y >= player1P1.y && ballCenter.y <= player1P2.y)
+		{
+			return true;
+		}
+		return false;
+	}
+	
+	function intersectsPlayer2()
+	{
+		if (ballCenter.y >= player2P1.y && ballCenter.y <= player2P2.y)
+		{
+			return true;
+		}
+		return false;
+	}
+	
+	function resetBallAnimation(adirection)
+	{
+		ballCenter = new jsPoint(500,300);
+		direction = direction;
+		timeouts = 4;
+		ballSpeed = 5;
+		
+		// reset the interface
+		movePlayer1PongLine(0);
+		
+		drawBall();
+		pauseTimeout = setTimeout("intermision()",500);
+	}
+	
+	function intermision()
+	{
+		if (timeouts == 0)
+		{
+			speedIncreaseTimeout = setTimeout("increaseSpeed()", speedIncreaseInterval);
+			clearTimeout(timeout);
+			timeout = setTimeout("animateBall()",10);
+		}
+		else
+		{
+			if (timeouts % 2 == 1)
+			{
+				ballColor = new jsColor("red");
+			}
+			else
+			{
+				ballColor = new jsColor("blue");
+			}
+			timeouts--;
+			drawBall();
+			pauseTimeout = setTimeout("intermision()",500);
+		}
+	}
+	
+	function increaseSpeed()
+	{
+		if (ballSpeed < 20)
+			ballSpeed++;
+		speedIncreaseTimeout = setTimeout("increaseSpeed()", speedIncreaseInterval);
+	}
+	
+	function drawBall()
+	{
+		gr.fillCircle(ballColor,ballCenter,ballWidth);
+	}
+	
+	function movePlayer1PongLine(acceleroData)
+	{
+		//document.getElementById("debugP").innerHTML = acceleroData;
+		
+		gr.clear();
+		if (acceleroData > 0 && player1P2.y + 25 <= upperPongLimit)
+		{
+			player1P1.y = player1P1.y + 25;
+			player1P2.y = player1P2.y + 25;
+		}
+		else if (acceleroData < 0 && player1P1.y - 25 >= lowerPongLimit)
+		{
+			player1P1.y = player1P1.y - 25;
+			player1P2.y = player1P2.y - 25;
+		}
+		gr.drawLine(pen,player1P1,player1P2);
+		
+		// draw the player 2 pong line
+		gr.drawLine(pen,player2P1,player2P2);
+		
+		// draw the ball if in intermission
+		if (timeouts != 0)
+			drawBall();
+	}
+	
+	function movePlayer2PongLine(acceleroData)
+	{
+		//document.getElementById("debugP").innerHTML = acceleroData;
+		
+		if (acceleroData > 0 && player2P2.y + 25 <= upperPongLimit)
+		{
+			player2P1.y = player2P1.y + 25;
+			player2P2.y = player2P2.y + 25;
+			gr.clear();
+			gr.drawLine(pen,player2P1,player2P2);
+		}
+		else if (acceleroData < 0 && player2P1.y - 25 >= lowerPongLimit)
+		{
+			player2P1.y = player2P1.y - 25;
+			player2P2.y = player2P2.y - 25;
+			gr.clear();
+			gr.drawLine(pen,player2P1,player2P2);
+		}
+		
+		// draw the player 2 pong line
+		gr.drawLine(pen,player1P1,player1P2);
+		
+		// draw the ball if in intermission
+		if (timeouts != 0)
+			drawBall();
+	}
+	
+	function keydown(e)
+	{
+		if (e.which == 38)
+		{
+			movePlayer1PongLine(-1);
+		}
+		if (e.which == 40)
+		{
+			movePlayer1PongLine(1);
+		}
+		if (e.which == 87)
+		{
+			movePlayer2PongLine(-1);
+		}
+		if (e.which == 83)
+		{
+			movePlayer2PongLine(1);
+		}
+		
+	//	document.getElementById("debugP").innerHTML = e.which;
+	}
+</script>
+
 </head>
 
 <body>
 <p id="debugP">Debug text</p>
+<div id="p1score" style="float: left; text-align: left; position: absolute; top: 25px; left: 20px;">Player 1: 0</div>
+<div id="p2score" style="float: right; text-align: right; position: absolute; top: 25px; left: 930px;">Player 2: 0</div>
+
 <div id="canvas" style="position:relative;width:1000px;height:600px; border:1px solid black"></div>
 
-<script src="/socket.io/socket.io.js"></script>
 <script type="text/javascript">
 	var socket = io.connect();
 	socket.on('connect', function () {
@@ -16,7 +267,7 @@
 	});
 	
 	socket.on('acceleromessage', function(msg) {
-		movePongLine(msg);
+		movePlayer1PongLine(msg);
 	});
 	});
 </script>
@@ -28,35 +279,50 @@
 	//Create jsColor object
 	var col = new jsColor("black");
 
+	var pongBarWidth = 10;
 	//Create jsPen object
-	var pen = new jsPen(col,10);
+	var pen = new jsPen(col,pongBarWidth);
 	
 	var lowerPongLimit = 30;
-	var upperPongLimit = 600;
-	//Draw a Line between 2 points
-	var pt1 = new jsPoint(20,30);
-	var pt2 = new jsPoint(20,100);
-	gr.drawLine(pen,pt1,pt2);
+	var upperPongLimit = 580;
+	var leftPongLimit = 20;
+	var rightPongLimit = 970;
+	var pongLineHeight = 70;
+	var initialPongYPos = 30;
 	
-	function movePongLine(acceleroData)
-	{
-		document.getElementById("debugP").innerHTML = acceleroData;
-		
-		if (acceleroData > 0 && pt2.y + 25 <= upperPongLimit)
-		{
-			pt1.y = pt1.y + 25;
-			pt2.y = pt2.y + 25;
-			gr.clear();
-			gr.drawLine(pen,pt1,pt2);
-		}
-		else if (acceleroData < 0 && pt1.y - 25 >= lowerPongLimit)
-		{
-			pt1.y = pt1.y - 25;
-			pt2.y = pt2.y - 25;
-			gr.clear();
-			gr.drawLine(pen,pt1,pt2);
-		}
-	}
+	//Draw player 1 pong line
+	var player1P1 = new jsPoint(leftPongLimit,initialPongYPos);
+	var player1P2 = new jsPoint(leftPongLimit,initialPongYPos + pongLineHeight);
+	gr.drawLine(pen,player1P1,player1P2);
+	
+	//Draw player 2 pong line
+	var player2P1 = new jsPoint(rightPongLimit,initialPongYPos);
+	var player2P2 = new jsPoint(rightPongLimit,initialPongYPos + pongLineHeight);
+	gr.drawLine(pen,player2P1,player2P2);
+	
+	// the ball
+	var ballCenter = new jsPoint(500,300);
+	var ballColor = new jsColor("red");
+	var ballWidth = 6;
+	var direction = 1;
+	
+	// the distance (the speed of the ball)
+	var ballSpeed = 5;
+	var speedIncreaseInterval = 4000;
+	
+	// the scores
+	var player1Score = 0;
+	var player2Score = 0;
+	
+	var timeout;
+	
+	// between games timeout
+	var timeouts = 0;
+	var pauseTimeout;
+	
+	var speedIncreaseTimeout;
+	
+	init();
 </script>
 
 </body>
