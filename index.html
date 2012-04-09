@@ -386,10 +386,12 @@
 
 <body>
 <p id="debugP">Debug text</p>
-<div id="p1score" style="float: left; text-align: left; position: absolute; top: 25px; left: 20px;">Player 1 score: 0</div>
-<div id="p2score" style="float: right; text-align: right; position: absolute; top: 25px; left: 895px;">Player 2 score: 0</div>
 
-<div id="canvas" style="position:relative;width:1000px;height:600px; border:1px solid black"></div>
+<div id="mainDiv" style="position:relative;width:1000px;height:600px;">
+<div id="p1score" style="float: left; text-align: left;">Player 1 score: 0</div>
+<div id="p2score" style="float: right; text-align: right;">Player 2 score: 0</div>
+<div id="pongGameDiv" style="position:relative;width:1000px; height:600px; border:1px solid black"></div>
+</div>
 
 <script type="text/javascript">
 	var socket = io.connect();
@@ -406,7 +408,7 @@
 
 <script type="text/JavaScript">
 	//Create jsGraphics object
-	var gr = new jsGraphics(document.getElementById("canvas"));
+	var gr = new jsGraphics(document.getElementById("pongGameDiv"));
 
 	//Create jsColor object
 	var col = new jsColor("black");
@@ -415,8 +417,8 @@
 	//Create jsPen object
 	var pen = new jsPen(col,pongBarWidth);
 
-	var canvasWidth = parseInt(document.getElementById("canvas").style.width);
-	var canvasHeight = parseInt(document.getElementById("canvas").style.height);
+	var canvasWidth = parseInt(document.getElementById("pongGameDiv").style.width);
+	var canvasHeight = parseInt(document.getElementById("pongGameDiv").style.height);
 	
 	var lowerPongLimit = 0;
 	var upperPongLimit = canvasHeight;
@@ -424,7 +426,7 @@
 	var rightPongLimit = canvasWidth;
 	var pongBarHeight = canvasHeight/5;
 	var initialPongYPos = (upperPongLimit - lowerPongLimit)/2 - pongBarHeight/2;
-
+	
 	//Draw player 1 pong line
 	var player1P1 = new jsPoint(leftPongLimit,initialPongYPos);
 	var player1P2 = new jsPoint(leftPongLimit,initialPongYPos + pongBarHeight);
