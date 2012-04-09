@@ -5,12 +5,15 @@
 <script src="static/narrativejs/deploy/njs_compile.js"></script>
 
 <script type="text/JavaScript">
-
+	/*
+	 * As usual, we need a function to set the stupid default values. I
+	 * guess this is it.
+	 */
 	function init()
 	{
-		ballSpeed = 5;
+		ballSpeedX = 5;
 		speedIncreaseTimeout = setTimeout("increaseSpeed()", 2000);
-		timeout=setTimeout("animateBall()",10);
+		timeout=setTimeout("animateBall()",5);
 		
 		if (document.addEventListener)
 		{
@@ -19,17 +22,30 @@
 		}	
 	}
 	
+	/*
+	 * Le main animation function - does shit.
+	 */
 	function animateBall() 
 	{
 		// do the animation
 		movePlayer1PongLine(0);
 		movePlayer2PongLine(0);
 		
+		// vertical ball animation
+		// change the vertical direction if the ball hits the upper or the lower bounds
+		if (ballCenter.y + ballSpeedY > upperPongLimit || ballCenter.y + ballSpeedY < lowerPongLimit)
+			ballSpeedY = -ballSpeedY;
+		
+		// horizontal ball animation
 		var someoneWon = false;
-		if (ballCenter.x + ballSpeed > player2P1.x)
+		if (ballCenter.x + ballSpeedX > player2P1.x)
 		{
 			if (intersectsPlayer2())
 			{
+				// adjust the y direction of the ball depending on the place where the ball
+				// hits the pong bar
+				adjustBallSpeed(player2P1.y);
+			
 				// clear and draw ball right next to the pong line - for smoothness
 				movePlayer1PongLine(0);
 				ballCenter.x = player2P1.x - ballWidth;
@@ -37,7 +53,7 @@
 				
 				// reset the timeout
 				clearTimeout(timeout);
-				timeout=setTimeout("animateBall()",10);
+				timeout=setTimeout("animateBall()",5);
 				
 				direction = -1;
 			}
@@ -50,10 +66,14 @@
 				resetBallAnimation(1);
 			}
 		}
-		if (ballCenter.x - ballSpeed < player1P1.x + pongBarWidth)
+		if (ballCenter.x - ballSpeedX < player1P1.x + pongBarWidth)
 		{
 			if (intersectsPlayer1())
 			{
+				// adjust the y direction of the ball depending on the place where the ball
+				// hits the pong bar
+				adjustBallSpeed(player1P1.y);
+			
 				// clear and draw ball right next to the pong line - for smoothness
 				movePlayer1PongLine(0);
 				ballCenter.x = player1P1.x + pongBarWidth + ballWidth; // leftPongLimit + pongBarWidth + ballWidth;
@@ -61,7 +81,7 @@
 				
 				// reset the timeout
 				clearTimeout(timeout);
-				timeout=setTimeout("animateBall()",10);
+				timeout=setTimeout("animateBall()",5);
 				
 				direction = 1;
 			}
@@ -78,9 +98,11 @@
 		if (!someoneWon)
 		{
 			if (direction == 1)
-				ballCenter.x += ballSpeed;
+				ballCenter.x += ballSpeedX;
 			else
-				ballCenter.x -= ballSpeed;
+				ballCenter.x -= ballSpeedX;
+			
+			ballCenter.y += ballSpeedY;
 
 			//Draw ball
 			drawBall();
@@ -90,23 +112,53 @@
 		}
 	} 
 	
+	/*
+	 * Adjusts the ball direction on the Y axix.
+	 * @param pongBarTopY: the pong bar top position. This parameter is used
+	 * to determine the y deviation of the ball.
+	 */
+	function adjustBallSpeed(pongBarTopY)
+	{
+		if (pongBarTopY + pongBarHeight/7 > ballCenter.y)
+			ballSpeedY = -5;
+		else if (pongBarTopY + 2 * pongBarHeight/7 > ballCenter.y)
+			ballSpeedY = -4;	
+		else if (pongBarTopY + 3 * pongBarHeight/7 > ballCenter.y)
+			ballSpeedY = -2;
+		else if (pongBarTopY + 4 * pongBarHeight/7 > ballCenter.y)
+			ballSpeedY = 0;
+		else if (pongBarTopY + 5 * pongBarHeight/7 > ballCenter.y)
+			ballSpeedY = 2;
+		else if (pongBarTopY + 6 * pongBarHeight/7 > ballCenter.y)
+			ballSpeedY = 4;
+		else
+			ballSpeedY = 5;
+	}
+	
+	/*
+	 * A player has one - show some respect and increment the score!
+	 * @param player: the player number
+	 */
 	function addPointToPlayer(player)
 	{
 		if (player == 1)
 		{
 			player1Score += 1;
-			document.getElementById("p1score").innerHTML = "Player 1: " + player1Score.toString();
+			document.getElementById("p1score").innerHTML = "Player 1 score: " + player1Score.toString();
 		}
 		else
 		{
 			if (player == 2)
 			{
 				player2Score += 1;
-				document.getElementById("p2score").innerHTML = "Player 2: " + player2Score.toString();
+				document.getElementById("p2score").innerHTML = "Player 2 score: " + player2Score.toString();
 			}
 		}
 	}
 	
+	/*
+	 * Checks if the ball intersects the player 1 pong bar.
+	 */
 	function intersectsPlayer1()
 	{
 		if (ballCenter.y >= player1P1.y && ballCenter.y <= player1P2.y)
@@ -116,6 +168,9 @@
 		return false;
 	}
 	
+	/*
+	 * Checks if the ball intersects the player 2 pong bar.
+	 */
 	function intersectsPlayer2()
 	{
 		if (ballCenter.y >= player2P1.y && ballCenter.y <= player2P2.y)
@@ -125,22 +180,47 @@
 		return false;
 	}
 	
+	/*
+	 * When a player wins a round, this function resets the positions of the ball,
+	 * pong bars and the speed of the ball.
+	 * @param adirection: -1 the ball goes right, 1 the ball goes left
+	 */
 	function resetBallAnimation(adirection)
 	{
-		ballCenter = new jsPoint(500,300);
 		direction = direction;
 		timeouts = 4;
-		ballSpeed = 5;
+		ballSpeedX = 5;
+		ballSpeedY = 0;
 		
 		// reset the interface
-		movePlayer1PongLine(0);
+		gr.clear();
+		
+		//Draw player 1 pong line
+		player1P1 = new jsPoint(leftPongLimit,initialPongYPos);
+		player1P2 = new jsPoint(leftPongLimit,initialPongYPos + pongBarHeight);
+		gr.drawLine(pen,player1P1,player1P2);
+	
+		//Draw player 2 pong line
+		player2P1 = new jsPoint(rightPongLimit - pongBarWidth,initialPongYPos);
+		player2P2 = new jsPoint(rightPongLimit - pongBarWidth,initialPongYPos + pongBarHeight);
+		gr.drawLine(pen,player2P1,player2P2);
+	
+		// reset the ball center
+		ballCenter = new jsPoint((rightPongLimit - leftPongLimit)/2,(upperPongLimit - lowerPongLimit)/2);
 		
 		drawBall();
+		// used to create a ball animation when the round is won
+		// it uses a 500 miliseconds interval to change the color of the ball
 		pauseTimeout = setTimeout("intermision()",500);
 	}
 	
+	/*
+	 * Creates a ball animation when the round is won by a player.
+	 */
 	function intermision()
 	{
+		// if there are no more timeouts, it means that the animation has finished
+		// and we can start the speed increase timeout
 		if (timeouts == 0)
 		{
 			speedIncreaseTimeout = setTimeout("increaseSpeed()", speedIncreaseInterval);
@@ -163,32 +243,62 @@
 		}
 	}
 	
+	/*
+	 * Increases the speed of the ball with 1 when the timer ticks (the 
+	 * speed of the ball is determined by the ball movement on the x axis).
+	 * The speed is increased until it reaches a maximum value.
+	 */
 	function increaseSpeed()
 	{
-		if (ballSpeed < 20)
-			ballSpeed++;
+		if (ballSpeedX < maxBallSpeed)
+			ballSpeedX++;
 		speedIncreaseTimeout = setTimeout("increaseSpeed()", speedIncreaseInterval);
 	}
 	
+	/*
+	 * Draws the ball on the screen
+	 */
 	function drawBall()
 	{
 		gr.fillCircle(ballColor,ballCenter,ballWidth);
 	}
 	
+	/*
+	 * Moves the player 1 pong bar based on the data recieved from the accelerometer
+	 * @param acceleroData: If acceleroData < 0 -> move the pong towards the top of the screen, 
+	 * acceleroData > 0 -> move the pong towards the bottom of the screen
+	 * acceleroData = 0 -> do nothing
+	 */
 	function movePlayer1PongLine(acceleroData)
 	{
 		//document.getElementById("debugP").innerHTML = acceleroData;
 		
 		gr.clear();
-		if (acceleroData > 0 && player1P2.y + barMovementDistance <= upperPongLimit)
+		if (acceleroData > 0)
 		{
-			player1P1.y = player1P1.y + barMovementDistance;
-			player1P2.y = player1P2.y + barMovementDistance;
+			if (player1P2.y + barMovementDistance <= upperPongLimit)
+			{
+				player1P1.y = player1P1.y + barMovementDistance;
+				player1P2.y = player1P2.y + barMovementDistance;
+			}
+			else
+			{
+				player1P1.y = upperPongLimit - pongBarHeight;
+				player1P2.y = upperPongLimit;
+			}
 		}
-		else if (acceleroData < 0 && player1P1.y - barMovementDistance >= lowerPongLimit)
+		else if (acceleroData < 0)
 		{
-			player1P1.y = player1P1.y - barMovementDistance;
-			player1P2.y = player1P2.y - barMovementDistance;
+			if (player1P1.y - barMovementDistance >= lowerPongLimit)
+			{
+				player1P1.y = player1P1.y - barMovementDistance;
+				player1P2.y = player1P2.y - barMovementDistance;
+			}
+			else
+			{
+				player1P1.y = 0;
+				player1P2.y = pongBarHeight;
+			}
 		}
 		gr.drawLine(pen,player1P1,player1P2);
 		
@@ -200,24 +310,44 @@
 			drawBall();
 	}
 	
+	/*
+	 * Moves the player 2 pong bar based on the data recieved from the accelerometer
+	 * @param acceleroData: If acceleroData < 0 -> move the pong towards the top of the screen, 
+	 * acceleroData > 0 -> move the pong towards the bottom of the screen
+	 * acceleroData = 0 -> do nothing
+	 */
 	function movePlayer2PongLine(acceleroData)
 	{
 		//document.getElementById("debugP").innerHTML = acceleroData;
 		
-		if (acceleroData > 0 && player2P2.y + barMovementDistance <= upperPongLimit)
+		gr.clear();
+		if (acceleroData > 0)
 		{
-			player2P1.y = player2P1.y + barMovementDistance;
-			player2P2.y = player2P2.y + barMovementDistance;
-			gr.clear();
-			gr.drawLine(pen,player2P1,player2P2);
+			if (player2P2.y + barMovementDistance <= upperPongLimit)
+			{
+				player2P1.y = player2P1.y + barMovementDistance;
+				player2P2.y = player2P2.y + barMovementDistance;
+			}
+			else
+			{
+				player2P1.y = upperPongLimit - pongBarHeight;
+				player2P2.y = upperPongLimit;
+			}
 		}
-		else if (acceleroData < 0 && player2P1.y - barMovementDistance >= lowerPongLimit)
+		else if (acceleroData < 0)
 		{
-			player2P1.y = player2P1.y - barMovementDistance;
-			player2P2.y = player2P2.y - barMovementDistance;
-			gr.clear();
-			gr.drawLine(pen,player2P1,player2P2);
+			if (player2P1.y - barMovementDistance >= lowerPongLimit)
+			{
+				player2P1.y = player2P1.y - barMovementDistance;
+				player2P2.y = player2P2.y - barMovementDistance;
+			}
+			else
+			{
+				player2P1.y = 0;
+				player2P2.y = pongBarHeight;
+			}
 		}
+		gr.drawLine(pen,player2P1,player2P2);
 		
 		// draw the player 2 pong line
 		gr.drawLine(pen,player1P1,player1P2);
@@ -227,6 +357,10 @@
 			drawBall();
 	}
 	
+	/*
+	 * The keydown event handler.
+	 * @param e: the event args.
+	 */
 	function keydown(e)
 	{
 		if (e.which == 38)
@@ -245,8 +379,6 @@
 		{
 			movePlayer2PongLine(1);
 		}
-		
-	//	document.getElementById("debugP").innerHTML = e.which;
 	}
 </script>
 
@@ -254,8 +386,8 @@
 
 <body>
 <p id="debugP">Debug text</p>
-<div id="p1score" style="float: left; text-align: left; position: absolute; top: 25px; left: 20px;">Player 1: 0</div>
-<div id="p2score" style="float: right; text-align: right; position: absolute; top: 25px; left: 930px;">Player 2: 0</div>
+<div id="p1score" style="float: left; text-align: left; position: absolute; top: 25px; left: 20px;">Player 1 score: 0</div>
+<div id="p2score" style="float: right; text-align: right; position: absolute; top: 25px; left: 895px;">Player 2 score: 0</div>
 
 <div id="canvas" style="position:relative;width:1000px;height:600px; border:1px solid black"></div>
 
@@ -282,35 +414,40 @@
 	var pongBarWidth = 10;
 	//Create jsPen object
 	var pen = new jsPen(col,pongBarWidth);
+
+	var canvasWidth = parseInt(document.getElementById("canvas").style.width);
+	var canvasHeight = parseInt(document.getElementById("canvas").style.height);
 	
-	var lowerPongLimit = 30;
-	var upperPongLimit = 580;
-	var leftPongLimit = 20;
-	var rightPongLimit = 970;
-	var pongLineHeight = 70;
-	var initialPongYPos = 30;
-	
+	var lowerPongLimit = 0;
+	var upperPongLimit = canvasHeight;
+	var leftPongLimit = 0;
+	var rightPongLimit = canvasWidth;
+	var pongBarHeight = canvasHeight/5;
+	var initialPongYPos = (upperPongLimit - lowerPongLimit)/2 - pongBarHeight/2;
+
 	//Draw player 1 pong line
 	var player1P1 = new jsPoint(leftPongLimit,initialPongYPos);
-	var player1P2 = new jsPoint(leftPongLimit,initialPongYPos + pongLineHeight);
+	var player1P2 = new jsPoint(leftPongLimit,initialPongYPos + pongBarHeight);
 	gr.drawLine(pen,player1P1,player1P2);
 	
 	//Draw player 2 pong line
-	var player2P1 = new jsPoint(rightPongLimit,initialPongYPos);
-	var player2P2 = new jsPoint(rightPongLimit,initialPongYPos + pongLineHeight);
+	var player2P1 = new jsPoint(rightPongLimit - pongBarWidth,initialPongYPos);
+	var player2P2 = new jsPoint(rightPongLimit - pongBarWidth,initialPongYPos + pongBarHeight);
 	gr.drawLine(pen,player2P1,player2P2);
 	
 	// the pong bar movement distance
-	var barMovementDistance = 15;
+	var barMovementDistance = 25;
 	
 	// the ball
-	var ballCenter = new jsPoint(500,300);
+	var ballCenter = new jsPoint((rightPongLimit - leftPongLimit)/2,(upperPongLimit - lowerPongLimit)/2);
 	var ballColor = new jsColor("red");
 	var ballWidth = 6;
 	var direction = 1;
 	
 	// the distance (the speed of the ball)
-	var ballSpeed = 5;
+	var ballSpeedX = 1;
+	var ballSpeedY = 0;
+	var maxBallSpeed = 10;
 	// the ball speed increases at every 'speedIncreaseInterval' milliseconds
 	var speedIncreaseInterval = 4000;
 	
