@@ -5,8 +5,7 @@
 
 <script type="text/JavaScript">
 	/*
-	 * As usual, we need a function to set the stupid default values. I
-	 * guess this is it.
+	 * Yes.
 	 */
 	function init()
 	{
@@ -405,6 +404,7 @@
 	
 	socket.on('acceleroUDP', function(msg) {
 		document.getElementById("debugP").innerHTML = msg;
+		movePlayer1PongLine(msg);
 	});
 	});
 </script>
@@ -450,9 +450,9 @@
 	var direction = 1;
 	
 	// the distance (the speed of the ball)
-	var ballSpeedX = 1;
+	var ballSpeedX = 0.2;
 	var ballSpeedY = 0;
-	var maxBallSpeed = 10;
+	var maxBallSpeed = 3;
 	// the ball speed increases at every 'speedIncreaseInterval' milliseconds
 	var speedIncreaseInterval = 4000;
 	
