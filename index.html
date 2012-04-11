@@ -2,7 +2,6 @@
 <head>
 <script type="text/JavaScript" src="static/jsDraw2D.js"></script>
 <script src="/socket.io/socket.io.js"></script>
-<script src="static/narrativejs/deploy/njs_compile.js"></script>
 
 <script type="text/JavaScript">
 	/*
@@ -402,6 +401,10 @@
 	
 	socket.on('acceleromessage', function(msg) {
 		movePlayer1PongLine(msg);
+	});
+	
+	socket.on('acceleroUDP', function(msg) {
+		document.getElementById("debugP").innerHTML = msg;
 	});
 	});
 </script>
