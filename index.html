@@ -1,5 +1,8 @@
 <html>
 <head>
+
+<title>Le pong</title>
+
 <script type="text/JavaScript" src="static/jsDraw2D.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 
@@ -383,13 +386,16 @@
 </head>
 
 <body>
-<p id="debugP">Debug text</p>
 
+<center> 
+<p id="debugP">Debug text</p>
 <div id="mainDiv" style="position:relative;width:1000px;height:600px;">
 <div id="p1score" style="float: left; text-align: left;">Player 1 score: 0</div>
 <div id="p2score" style="float: right; text-align: right;">Player 2 score: 0</div>
 <div id="pongGameDiv" style="position:relative;width:1000px; height:600px; border:1px solid black"></div>
 </div>
+<p id="browserID">Browser ID</p>
+</center>
 
 <script type="text/javascript">
 	var socket = io.connect();
@@ -398,13 +404,36 @@
 		document.getElementById("debugP").innerHTML = msg;
 	});
 	
+	socket.on('browserID', function (msg) {
+		document.getElementById("browserID").innerHTML = "Browser ID: " + msg;
+	});
+	
 	socket.on('acceleromessage', function(msg) {
 		movePlayer1PongLine(msg);
 	});
 	
 	socket.on('acceleroUDP', function(msg) {
 		document.getElementById("debugP").innerHTML = msg;
-		movePlayer1PongLine(msg);
+		var splitData = msg.split('|');
+		var message_type = splitData[0];
+		var player_id = splitData[1];
+		var accelero_data = splitData[2];
+		var additional_message = splitData[3];
+		if (message_type === "1")
+		{
+			if (numberOfPlayers < maxNumberOfPlayers)
+			{
+				numberOfPlayers++;
+				players[numberOfPlayers] = player_id;
+			}
+			else
+			{
+				if (players[0] === player_id)
+					movePlayer1PongLine(accelero_data);
+				else if (players[1] === player_id)
+					movePlayer2PongLine(accelero_data);
+			}
+		}
 	});
 	});
 </script>
@@ -467,6 +496,10 @@
 	var pauseTimeout;
 	
 	var speedIncreaseTimeout;
+	
+	var maxNumberOfPlayers = 2;
+	var numberOfPlayers = 0;
+	var players = new Array();
 	
 	init();
 </script>

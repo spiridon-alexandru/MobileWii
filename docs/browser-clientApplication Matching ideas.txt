@@ -1,0 +1,7 @@
+How to link a browser with a mobile client:
+	- currently implemented: a code generated on the server, sent to the browser and written inside the 
+	mobile client by the user;
+	- QR codes: the client mobile application contains a QR code reader - the QR is available on the game
+	page and the user only needs to take a photo of the QR image;
+	- GPS location: the browser and client application are matched by a GPS location - on the mobile device,
+	this is easy to achieve but on the desktop (browser client) this is harder - needs more research.

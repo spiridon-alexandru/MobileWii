@@ -1,0 +1,16 @@
+Mobile client to server message type:
+"message_type|browser_id|player_id|accelero_data|additional_message"
+	Where message_type: 0 - error
+			    1 - message containing valid accelerometer data
+
+Server to browser message type:
+"message_type|player_id|accelero_data|additional_message"
+	Where message_type: 0 - error
+			    1 - message containing valid accelerometer data coming from the mobile client
+
+Future: Browser to server message:
+"message_type|browser_id|game_type|number_of_players|additional_data"
+	Where message_type: 0 - error
+			    1 - Connect message - the server sends the game type and the maximum number
+				of players that can play a certain game
+	      game_type: a unique game identifier (currently only a simple pong game is implemented)
