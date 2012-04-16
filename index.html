@@ -395,7 +395,14 @@
 <div id="pongGameDiv" style="position:relative;width:1000px; height:600px; border:1px solid black"></div>
 </div>
 <p id="browserID">Browser ID</p>
+<p id="playersConnected" align="right">No players connected</p>
 </center>
+
+<div class="btn-group">
+  <button class="btn">1</button>
+  <button class="btn">2</button>
+  <button class="btn">3</button>
+</div>
 
 <script type="text/javascript">
 	var socket = io.connect();
@@ -406,6 +413,7 @@
 	
 	socket.on('browserID', function (msg) {
 		document.getElementById("browserID").innerHTML = "Browser ID: " + msg;
+		numberOfPlayers = 0;
 	});
 	
 	socket.on('acceleromessage', function(msg) {
@@ -421,18 +429,27 @@
 		var additional_message = splitData[3];
 		if (message_type === "1")
 		{
-			if (numberOfPlayers < maxNumberOfPlayers)
+			var playerExists = false;
+			for (var i = 0; i < players.length; i++)
+			{
+				if (players[i] === player_id)
+				{
+					playerExists = true;
+					break;
+				}
+			}
+			if (numberOfPlayers < maxNumberOfPlayers && !playerExists)
 			{
 				numberOfPlayers++;
 				players[numberOfPlayers] = player_id;
+				
+				document.getElementById("playersConnected").innerHTML = "Players connected: " + numberOfPlayers.toString();
 			}
-			else
-			{
-				if (players[0] === player_id)
-					movePlayer1PongLine(accelero_data);
-				else if (players[1] === player_id)
-					movePlayer2PongLine(accelero_data);
-			}
+			
+			if (players[1] === player_id)
+				movePlayer1PongLine(accelero_data);
+			else if (players[2] === player_id)
+				movePlayer2PongLine(accelero_data);
 		}
 	});
 	});

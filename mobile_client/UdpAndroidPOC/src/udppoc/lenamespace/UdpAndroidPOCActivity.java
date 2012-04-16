@@ -13,7 +13,10 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -46,7 +49,7 @@ public class UdpAndroidPOCActivity extends Activity  implements SensorEventListe
 	TextView ip_textView;
 	TextView uid_textView;
 	TextView browserID_textView;
-    
+	
 	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -59,8 +62,11 @@ public class UdpAndroidPOCActivity extends Activity  implements SensorEventListe
         generateUniqueID();
         
         // set the default ip
-        ip_address = "10.86.234.216";
+        ip_address = "192.168.1.41";
         ip_textView.setText(ip_address);
+        
+        // Keep the screen alive
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         
         // event listener for the send test udp package button click
         send_udp_button.setOnClickListener(new View.OnClickListener() {
@@ -71,7 +77,7 @@ public class UdpAndroidPOCActivity extends Activity  implements SensorEventListe
                 String messageStr="Message number " + String.valueOf(messageNumber);
         		try {
         			s = new DatagramSocket();
-        			InetAddress local = InetAddress.getByName("10.86.234.216");
+        			InetAddress local = InetAddress.getByName(ip_address);
         	        int msg_length=messageStr.length();
         	        byte[] message = messageStr.getBytes();
         	        DatagramPacket p = new DatagramPacket(message, msg_length,local,server_port);
@@ -168,7 +174,7 @@ public class UdpAndroidPOCActivity extends Activity  implements SensorEventListe
 			messageStr = String.valueOf(1) + "|" + browserID + "|" + uniqueID + "|" + String.valueOf(y) + "|";
 			
 			s = new DatagramSocket();
-			InetAddress local = InetAddress.getByName("10.86.234.216");
+			InetAddress local = InetAddress.getByName(ip_address);
 	        int msg_length=messageStr.length();
 	        byte[] message = messageStr.getBytes();
 	        DatagramPacket p = new DatagramPacket(message, msg_length,local,server_port);

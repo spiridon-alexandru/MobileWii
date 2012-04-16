@@ -40,7 +40,7 @@ function generateBrowserID(browserNr)
 {
 	var browserID = browserNr * 100;
 	var randomnumber = Math.floor(Math.random()*100);
-	return browserID + randomnumber;
+	return (browserID + randomnumber).toString();
 }
 
 // UDP shit
@@ -61,7 +61,7 @@ server.on("message", function (msg, rinfo) {
 	{
 		for (var i = 0; i < browserNr; i++)
 		{
-			if (browsersIds[i] === browserID)
+			if (browserIds[i] === browserID)
 			{
 				// the server to browser message has the following structure:
 				// message_type|player_id|accelero_data|additional_message
